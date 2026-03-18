@@ -92,8 +92,8 @@ function loadCsvById(filePath) {
   return map;
 }
 
-/** productDescription: 9 campos. Farm..Farmer History desde XLSX; Score desde CSV. Se unen ambas fuentes. */
-function buildProductDescription(farmerRow, csvData) {
+/** productDescription: solo datos de finca (XLSX). El score va en la raíz del documento (CSV). */
+function buildProductDescription(farmerRow) {
   return {
     farm: farmerRow ? toVal(farmerRow.Farm) : null,
     altitude: farmerRow ? toVal(farmerRow.Altitude) : null,
@@ -102,8 +102,6 @@ function buildProductDescription(farmerRow, csvData) {
     soil: farmerRow ? toVal(farmerRow.Soil) : null,
     location: farmerRow ? toVal(farmerRow.Location) : null,
     farmer: farmerRow ? toVal(farmerRow.Farmer) : null,
-    farmerHistory: farmerRow ? toVal(farmerRow["Farmer History"]) : null,
-    score: csvData?.score ?? null,
   };
 }
 
@@ -162,9 +160,15 @@ async function main() {
       else if (nameRaw) unmatchedFarmer.push(nameRaw);
       if (csvData) csvMatchCount++;
 
-      doc.productDescription = buildProductDescription(farmerRow, csvData);
+      doc.productDescription = buildProductDescription(farmerRow);
+      doc.score = csvData?.score ?? null;
+
       if (sampleMatches.length < 3 && (farmerRow || csvData)) {
-        sampleMatches.push({ name: nameRaw, pd: doc.productDescription });
+        sampleMatches.push({
+          name: nameRaw,
+          pd: doc.productDescription,
+          score: doc.score,
+        });
       }
     }
 
@@ -172,7 +176,7 @@ async function main() {
     console.log("\n🔍 Primeros 3 con datos (CSV + XLSX unidos):");
     for (const s of sampleMatches) {
       console.log(
-        `  "${s.name}" → farm: ${s.pd.farm ?? "—"}, farmer: ${s.pd.farmer ?? "—"}, score: ${s.pd.score ?? "—"}`
+        `  "${s.name}" → farm: ${s.pd.farm ?? "—"}, farmer: ${s.pd.farmer ?? "—"}, score (raíz): ${s.score ?? "—"}`
       );
     }
 
